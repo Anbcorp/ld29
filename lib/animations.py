@@ -74,7 +74,7 @@ class EntityAnimation(Animation):
             self.entity.image = self.sprites['left'][self.frame]
         if self.entity.direction == RIGHT:
             self.entity.image = self.sprites['right'][self.frame]
-        if self.entity.direction == UP:
-            self.entity.image = self.sprites['up'][self.frame]
-        if self.entity.direction == DOWN:
-            self.entity.image = self.sprites['down'][self.frame]
+        # if self.entity.direction == UP:
+        #     self.entity.image = self.sprites['up'][self.frame]
+        # if self.entity.direction == DOWN:
+        #     self.entity.image = self.sprites['down'][self.frame]
