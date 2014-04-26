@@ -18,9 +18,12 @@ class ScrolledGroup(pygame.sprite.Group):
         super(ScrolledGroup, self).__init__(*sprites)
         self._camera_x = 0
         self._camera_y = 0
+        self.e_time = 0
+        self.debug = False
 
     @property
     def camera(self):
+
         return (self._camera_x, self._camera_y)
     @camera.setter
     def camera(self, value):
@@ -29,8 +32,22 @@ class ScrolledGroup(pygame.sprite.Group):
 
     def update(self, dt, game, *args):
         super(ScrolledGroup, self).update(dt, game, *args)
+        self.e_time += dt
+        if self.e_time > 1 and self.debug:
+            print self.camera
+            self.e_time = 0
         # TODO : screen size constants
-        self.camera = (game.player.rect.x - 320, game.player.rect.y - 240)
+        cam_x = game.player.rect.x - 320
+        cam_y = game.player.rect.y - 240
+        if cam_x < 0:
+            cam_x = 0
+        elif cam_x > game.current_level.h_size*32 - 640:
+            cam_x = game.current_level.h_size*32 - 640
+        if cam_y < 0:
+            cam_y = 0
+        elif cam_y > game.current_level.v_size*32 - 480:
+            cam_y = game.current_level.v_size*32 - 480
+        self.camera = (cam_x, cam_y)
 
     def draw(self, surface):
         for sprite in self.sprites():
@@ -72,19 +89,19 @@ class BasicLevel(Level):
 
     def generate(self):
         # we use pixels instead of tiles
-        self.h_size *= 32
-        self.v_size *= 32
+        h_size = self.h_size*32
+        v_size = self.v_size*32
         tiles = pygame.image.load(resources.getImage('level'))
         # TODO: load a specific tile from resources
         block = tiles.subsurface(pygame.Rect(6*32,3*32,32,32))
 
-        grass = tiles.subsurface(pygame.Rect(0,0,32,32))
+        self.empty_tile = tiles.subsurface(pygame.Rect(0,0,32,32))
         print block.get_size()
         # TODO: level generation here
         # TODO: arbitrary level sizes do not work (empty wall) is not a multiple of 32
-        for x in range(0, self.h_size, 32):
-            for y in range(0,self.v_size,32):
-                if x in (0,self.h_size-32) or y in (0, self.v_size-32):
+        for x in range(0, h_size, 32):
+            for y in range(0,v_size,32):
+                if x in (0,h_size-32) or y in (0, v_size-32):
                     # Sprite(*groups) add the new sprites in the groups
                     wall = pygame.sprite.Sprite(self.blockers)
                     wall.image = block
@@ -95,7 +112,7 @@ class BasicLevel(Level):
                         tile.image = block
                     else:
                         tile = pygame.sprite.Sprite(self.tiles)
-                        tile.image = grass
+                        tile.image = self.empty_tile
                     tile.rect = pygame.rect.Rect((x,y), tile.image.get_size())
 
 
@@ -103,43 +120,55 @@ class MazeLevel(Level):
 
     def __init__(self):
         super(MazeLevel, self).__init__()
+        self.set_tiles()
+        self.autolayout()
 
-        self.blockers
+    def set_tiles(self):
+        self.tileset = pygame.image.load(resources.getImage('level'))
+        # TODO: load a specific tile from resources
+        (base_x, base_y) = (4,14)
+        self.blocks = self.get_blocks(base_x, base_y)
+        self.empty_tile = self.tileset.subsurface(pygame.Rect(0,0,32,32))
+
+    def get_blocks(self, base_x, base_y):
+        """
+        Return a dicts of blocks variant from a NW corner, suitable for
+        autolayouting
+        """
+        return {
+            'N1':self.getTile(base_x+1,base_y),
+            'N2':self.getTile(base_x+2,base_y),
+            'S1':self.getTile(base_x+1,base_y+3),
+            'S2':self.getTile(base_x+2,base_y+3),
+            'E1':self.getTile(base_x+3,base_y+1),
+            'E2':self.getTile(base_x+3,base_y+2),
+            'W1':self.getTile(base_x,base_y+1),
+            'W2':self.getTile(base_x,base_y+2),
+            'NW':self.getTile(base_x,base_y),
+            'NE':self.getTile(base_x+3,base_y),
+            'SW':self.getTile(base_x,base_y+3),
+            'SE':self.getTile(base_x+3,base_y+3),
+            'mNW':self.getTile(base_x+1,base_y+1),
+            'mNE':self.getTile(base_x+2,base_y+1),
+            'mSW':self.getTile(base_x+1,base_y+2),
+            'mSE':self.getTile(base_x+2,base_y+2),
+            'iNW':self.getTile(base_x+2,base_y-2),
+            'iNE':self.getTile(base_x+3,base_y-2),
+            'iSE':self.getTile(base_x+3,base_y-1),
+            'iSW':self.getTile(base_x+2,base_y-1),
+        }
+
+
+
+    def getTile(self, x, y,size=16):
+            return self.tileset.subsurface(pygame.Rect(x*16,y*16,16,16))
 
     def generate(self):
         h_size = self.h_size
         v_size = self.v_size
-        def getTile(x,y,size=16):
-            return tiles.subsurface(pygame.Rect(x*16,y*16,16,16))
 
-        tiles = pygame.image.load(resources.getImage('level'))
-        # TODO: load a specific tile from resources
-        block = tiles.subsurface(pygame.Rect(3,10,16,16))
-        blocks = {
-            'N1':getTile(5,14),
-            'N2':getTile(6,14),
-            'S1':getTile(5,17),
-            'S2':getTile(6,17),
-            'E1':getTile(7,15),
-            'E2':getTile(7,16),
-            'W1':getTile(4,15),
-            'W2':getTile(4,16),
-            'NW':getTile(4,14),
-            'NE':getTile(7,14),
-            'SW':getTile(4,17),
-            'SE':getTile(7,17),
-            'mNW':getTile(5,15),
-            'mNE':getTile(6,15),
-            'mSW':getTile(5,16),
-            'mSE':getTile(6,16),
-            'iNW':getTile(6,12),
-            'iNE':getTile(7,12),
-            'iSE':getTile(7,13),
-            'iSW':getTile(6,13),
-        }
-        grass = tiles.subsurface(pygame.Rect(0,0,32,32))
 
-        level = numpy.zeros((h_size, v_size))
+        self.level = numpy.zeros((h_size, v_size))
 
         pos = [
             random.randint(1, h_size - 2),
@@ -150,7 +179,7 @@ class MazeLevel(Level):
         self.start_dir = random.choice(DIRECTIONS)
         dire = self.start_dir
 
-        level[pos[0],pos[1]] = 1
+        self.level[pos[0],pos[1]] = 1
         for i in range(0,50):
             for step in range(4,random.randint(5,25)):
                 if dire == UP:
@@ -177,25 +206,27 @@ class MazeLevel(Level):
                         pos[0] = 1
                         dire = random.choice((DOWN,LEFT,UP))
 
-                level[pos[0],pos[1]] = 1
+                self.level[pos[0],pos[1]] = 1
             choices = DIRECTIONS[:]
             choices.pop(dire)
             dire = random.choice(choices)
         print "map ok"
-        for y in range(0, v_size):
-            for x in range(0, h_size):
-                if level[x,y] == 0:
+
+    def autolayout(self):
+        for y in range(0, self.v_size):
+            for x in range(0, self.h_size):
+                if self.level[x,y] == 0:
                     # place tiles according to surroundings
                     # the resulting surface is 32x32
-                    wall = pygame.sprite.Sprite(self.blockers)
-                    wall.image = pygame.Surface((32,32))
+                    tile = pygame.sprite.Sprite(self.blockers)
+                    tile.image = pygame.Surface((32,32))
                     # get value for 8 tiles surroundings
                     def get_adj_tile(x, y):
-                        if x > h_size-1 or x < 0 :
+                        if x > self.h_size-1 or x < 0 :
                             return 0
-                        if y > v_size-1 or y < 0 :
+                        if y > self.v_size-1 or y < 0 :
                             return 0
-                        return int(level[x,y])
+                        return int(self.level[x,y])
 
                     n  = int(get_adj_tile(x,y-1))   << 0
                     ne = int(get_adj_tile(x+1,y-1)) << 1
@@ -225,112 +256,125 @@ class MazeLevel(Level):
 
                     # for the NW quadrant (x is our tile, O is empty, X is
                     # filled)
-                    if x == h_size -1 and y == v_size -1:
-                        print qNW, qNE, qSE, qSW
-                    if x == h_size -2 and y == v_size -1:
-                        print qNW, qNE, qSE, qSW
                     if qNW == 193 or qNW == 65:
                         # OO XO
                         # Ox Ox
-                        tNW = blocks['NW']
+                        tNW = self.blocks['NW']
                     elif qNW == 1 or qNW == 129:
                         # OO XO
                         # Xx Xx
-
-                        print x,y,"N1"
-                        tNW = blocks['N1']
+                        tNW = self.blocks['N1']
                     elif qNW == 192 or qNW == 64:
                         # OX XX
                         # Ox Ox
-                        tNW = blocks['W1']
+                        tNW = self.blocks['W1']
                     elif qNW == 128:
                         # OX
                         # Xx
-                        if x == h_size -1 and y == v_size -1:
-                            print "inner NW"
-                        tNW = blocks['iNW']
+                        tNW = self.blocks['iNW']
                     else:
                         # XX
                         # Xx
-                        tNW = blocks['mNW']
+                        tNW = self.blocks['mNW']
 
                     if qNE == 7 or qNE == 5:
                         # 111
                         # OO OX
                         # xO xO
-                        tNE = blocks['NE']
+                        tNE = self.blocks['NE']
                     elif qNE == 3 or qNE == 1:
                         # OO OX
                         # xX xX
-                        tNE = blocks['N2']
+                        tNE = self.blocks['N2']
                     elif qNE == 6 or qNE == 4:
                         # XO XX
                         # xO xO
-                        tNE = blocks['E1']
+                        tNE = self.blocks['E1']
                     elif qNE == 2:
                         # X0
                         # xX
-                        tNE = blocks['iNE']
+                        tNE = self.blocks['iNE']
                     else:
                         # XX
                         # xX
-                        tNE = blocks['mNE']
+                        tNE = self.blocks['mNE']
 
                     if qSE == 28 or qSE == 20:
                         # 111
                         # xO xO
                         # OO OX
-                        tSE = blocks['SE']
+                        tSE = self.blocks['SE']
                     elif qSE == 12 or qSE == 4:
                         # xO xO
                         # XO XX
-                        tSE = blocks['E2']
+                        tSE = self.blocks['E2']
                     elif qSE == 24 or qSE == 16:
                         # xX xX
                         # OO OX
-                        tSE = blocks['S2']
+                        tSE = self.blocks['S2']
                     elif qSE == 8:
                         # xX
                         # XO
-                        tSE = blocks['iSE']
+                        tSE = self.blocks['iSE']
                     else:
                         # xX
                         # XX
-                        tSE = blocks['mSE']
+                        tSE = self.blocks['mSE']
 
                     if qSW == 112 or qSW == 80:
                         # 111
                         # Ox Ox
                         # OO XO
-                        tSW = blocks['SW']
+                        tSW = self.blocks['SW']
                     elif qSW == 48 or qSW == 16:
                         # Xx Xx
                         # OO XO
-                        tSW = blocks['S1']
+                        tSW = self.blocks['S1']
                     elif qSW == 96 or qSW == 64:
                         # Ox Ox
                         # OX XX
-                        tSW = blocks['W2']
+                        tSW = self.blocks['W2']
                     elif qSW == 32:
                         # Xx
                         # OX
-                        tSW = blocks['iSW']
+                        tSW = self.blocks['iSW']
                     else:
                         # Xx
                         # XX
-                        tSW = blocks['mSW']
+                        tSW = self.blocks['mSW']
 
 
                     # We blit the smaller tiles into a larger one
-                    wall.image.blit(tNW, (0,0))
-                    wall.image.blit(tNE, (16,0))
-                    wall.image.blit(tSE, (16,16))
-                    wall.image.blit(tSW, (0,16))
-                    wall.rect = pygame.rect.Rect((x*32,y*32), (32,32))
+                    tile.image.blit(tNW, (0,0))
+                    tile.image.blit(tNE, (16,0))
+                    tile.image.blit(tSE, (16,16))
+                    tile.image.blit(tSW, (0,16))
+                    tile.rect = pygame.rect.Rect((x*32,y*32), (32,32))
                 else:
                     tile = pygame.sprite.Sprite(self.tiles)
-                    tile.image = grass
-                    tile.rect = pygame.rect.Rect((x*32,y*32), grass.get_size())
+                    tile.image = self.empty_tile
+                    tile.rect = pygame.rect.Rect((x*32,y*32), self.empty_tile.get_size())
+
+                # if x == self.start_pos.x/32 and y == self.start_pos.y/32:
+                #     print "startpos", x, y
+                #     pixels = pygame.surfarray.array3d(tile.image)
+                #     pixels[::,::31] = [255,0,0]
+                #     pixels[::31,::] = [255,0,0]
+                    # tile.image = pygame.surfarray.make_surface(pixels)
+
+class WorldLevel(MazeLevel):
+
+    def generate(self):
+        self.level = numpy.zeros((self.h_size, self.v_size))
+        self.level[::,0:4] = 1
+        self.start_pos = pygame.Rect((64,64),(0,0))
+
+    def set_tiles(self):
+        self.tileset = pygame.image.load(resources.getImage('level'))
+        # TODO: load a specific tile from resources
+        (base_x, base_y) = (16,14)
+        self.blocks = self.get_blocks(base_x, base_y)
+        self.empty_tile = self.tileset.subsurface(pygame.Rect(0,0,32,32))
 
 if __name__ == '__main__':
     m = MazeLevel()

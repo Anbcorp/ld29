@@ -16,5 +16,5 @@ bullet:
     hitsound: 'res/bullet_hit.ogg'
 
 level:
-    size: [33,33]
+    size: [25,25]
     image: 'res/tilea2.png'

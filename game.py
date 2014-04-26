@@ -41,7 +41,7 @@ class Game(object):
     def __init__(self):
         self.event_listener = EventListener(self)
         self.running = True
-        self.level = level.MazeLevel
+        self.level = level.WorldLevel
         print 'Started game', id(self)
 
     def process_key_event(self, event):
@@ -64,17 +64,18 @@ class Game(object):
 
         entities = level.ScrolledGroup()
         self.entities = entities
+        self.entities.debug = True
         self.player = Player(self, entities)
         self.player.move_to(self.current_level.start_pos)
 
         self.event_listener.register_listener(self, pygame.KEYDOWN)
 
-        for i in range(0,100):
-            ork = Enemy('ork', entities)
-            # TODO: starting pos and proper collbox for enemies
-            ork.rect = self.player.rect.copy()
-            ork.rect.width = 16
-            ork.rect.height = 16
+        # for i in range(0,100):
+        #     ork = Enemy('ork', entities)
+        #     # TODO: starting pos and proper collbox for enemies
+        #     ork.rect = self.player.rect.copy()
+        #     ork.rect.width = 16
+        #     ork.rect.height = 16
 
         while self.running:
             dt = clock.tick(30)
@@ -85,7 +86,6 @@ class Game(object):
             # update state of game
             entities.update(dt / 1000., self)
             self.current_level.update(dt / 1000., self)
-           # tiles.update(dt / 1000., self)
 
             # draw screen
             screen.fill((255,0,0))
