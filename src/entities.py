@@ -95,6 +95,7 @@ class PlayerControlledBrain(DumbBrain):
 
         self.key_pressed = set()
         self.atks = []
+        self.digging = False
 
     def think(self, delta_time, game):
         self.processInput(delta_time, game)
@@ -122,6 +123,7 @@ class PlayerControlledBrain(DumbBrain):
         atkpos.x += 8
         atkpos.y += 10
         self.entity.vector = [0,0]
+        self.digging = False
         for key in self.key_pressed:
             if key == pygame.K_LEFT:
                 self.entity.vector[0] = -self.entity.h_speed * delta_time
@@ -135,6 +137,7 @@ class PlayerControlledBrain(DumbBrain):
             if key == pygame.K_DOWN:
                 self.entity.vector[1] = +self.entity.v_speed * delta_time
                 self.entity.direction = DOWN
+                self.digging = True
 
         # process saved attacks directions and actually fire
         for pos in self.atks:
@@ -148,6 +151,7 @@ class Player(Entity):
         self.solid = True
 
         self.brain = PlayerControlledBrain(self)
+        self.game = game
         game.event_listener.register_listener(self.brain, pygame.KEYDOWN)
         game.event_listener.register_listener(self.brain,
             pygame.MOUSEBUTTONDOWN)
@@ -157,6 +161,10 @@ class Player(Entity):
 
         self.displacement = BaseDisplacement(self)
         self.displacement.set_speed(resources.getValue('%s.speed' % 'player'))
+
+    @property
+    def digging(self):
+        return self.brain.digging
 
     def move_to(self, new_position):
         if isinstance(new_position, list) or isinstance(new_position, tuple):
@@ -173,3 +181,7 @@ class Player(Entity):
         self.displacement.apply_gravity()
         self.displacement.move(self.vector[0], self.vector[1],
             game.current_level.blockers)
+
+    def touched_by(self, entity):
+        if entity in self.game.current_level.blockers and self.digging:
+            self.game.current_level.dig_out(entity)

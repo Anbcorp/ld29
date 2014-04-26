@@ -121,7 +121,12 @@ class MazeLevel(Level):
     def __init__(self):
         super(MazeLevel, self).__init__()
         self.set_tiles()
-        self.autolayout()
+        self.sprites = numpy.empty( (self.h_size, self.v_size),
+            dtype=pygame.sprite.Sprite)
+
+        for y in range(0, self.v_size):
+            for x in range(0, self.h_size):
+                self.autolayout(x, y)
 
     def set_tiles(self):
         self.tileset = pygame.image.load(resources.getImage('level'))
@@ -157,8 +162,6 @@ class MazeLevel(Level):
             'iSE':self.getTile(base_x+3,base_y-1),
             'iSW':self.getTile(base_x+2,base_y-1),
         }
-
-
 
     def getTile(self, x, y,size=16):
             return self.tileset.subsurface(pygame.Rect(x*16,y*16,16,16))
@@ -212,157 +215,161 @@ class MazeLevel(Level):
             dire = random.choice(choices)
         print "map ok"
 
-    def autolayout(self):
-        for y in range(0, self.v_size):
-            for x in range(0, self.h_size):
-                if self.level[x,y] == 0:
-                    # place tiles according to surroundings
-                    # the resulting surface is 32x32
-                    tile = pygame.sprite.Sprite(self.blockers)
-                    tile.image = pygame.Surface((32,32))
-                    # get value for 8 tiles surroundings
-                    def get_adj_tile(x, y):
-                        if x > self.h_size-1 or x < 0 :
-                            return 0
-                        if y > self.v_size-1 or y < 0 :
-                            return 0
-                        return int(self.level[x,y])
+    def autolayout(self, x, y):
+        if self.level[x,y] == 0:
+            print 'layouting', x, y
+            # place tiles according to surroundings
+            # the resulting surface is 32x32
+            tile = pygame.sprite.Sprite(self.blockers)
+            tile.image = pygame.Surface((32,32))
+            # get value for 8 tiles surroundings
+            def get_adj_tile(x, y):
+                if x > self.h_size-1 or x < 0 :
+                    return 0
+                if y > self.v_size-1 or y < 0 :
+                    return 0
+                return int(self.level[x,y])
 
-                    n  = int(get_adj_tile(x,y-1))   << 0
-                    ne = int(get_adj_tile(x+1,y-1)) << 1
-                    e  = int(get_adj_tile(x+1,y))   << 2
-                    se = int(get_adj_tile(x+1,y+1)) << 3
-                    s  = int(get_adj_tile(x,y+1))   << 4
-                    sw = int(get_adj_tile(x-1,y+1)) << 5
-                    w  = int(get_adj_tile(x-1,y))   << 6
-                    nw = int(get_adj_tile(x-1,y-1)) << 7
+            n  = int(get_adj_tile(x,y-1))   << 0
+            ne = int(get_adj_tile(x+1,y-1)) << 1
+            e  = int(get_adj_tile(x+1,y))   << 2
+            se = int(get_adj_tile(x+1,y+1)) << 3
+            s  = int(get_adj_tile(x,y+1))   << 4
+            sw = int(get_adj_tile(x-1,y+1)) << 5
+            w  = int(get_adj_tile(x-1,y))   << 6
+            nw = int(get_adj_tile(x-1,y-1)) << 7
 
-                    v = n+s+e+w+nw+ne+sw+se
-                    # Assign a bit for each tile surrounding
-                    # | 128 |   1 |   2 |
-                    # |  64 | til |   4 |
-                    # |  32 |  16 |   8 |
-                    #
-                    # then for each quadrant of our tile, the surroudings are
-                    # represented by values
-                    qNW = v & 0b11000001
-                    qNE = v & 0b00000111
-                    qSE = v & 0b00011100
-                    qSW = v & 0b01110000
+            v = n+s+e+w+nw+ne+sw+se
+            # Assign a bit for each tile surrounding
+            # | 128 |   1 |   2 |
+            # |  64 | til |   4 |
+            # |  32 |  16 |   8 |
+            #
+            # then for each quadrant of our tile, the surroudings are
+            # represented by values
+            qNW = v & 0b11000001
+            qNE = v & 0b00000111
+            qSE = v & 0b00011100
+            qSW = v & 0b01110000
 
-                    # O is empty (==1)
-                    # X is filled (==0)
-                    # add the values for Os
+            # O is empty (==1)
+            # X is filled (==0)
+            # add the values for Os
 
-                    # for the NW quadrant (x is our tile, O is empty, X is
-                    # filled)
-                    if qNW == 193 or qNW == 65:
-                        # OO XO
-                        # Ox Ox
-                        tNW = self.blocks['NW']
-                    elif qNW == 1 or qNW == 129:
-                        # OO XO
-                        # Xx Xx
-                        tNW = self.blocks['N1']
-                    elif qNW == 192 or qNW == 64:
-                        # OX XX
-                        # Ox Ox
-                        tNW = self.blocks['W1']
-                    elif qNW == 128:
-                        # OX
-                        # Xx
-                        tNW = self.blocks['iNW']
-                    else:
-                        # XX
-                        # Xx
-                        tNW = self.blocks['mNW']
+            # for the NW quadrant (x is our tile, O is empty, X is
+            # filled)
+            if qNW == 193 or qNW == 65:
+                # OO XO
+                # Ox Ox
+                tNW = self.blocks['NW']
+            elif qNW == 1 or qNW == 129:
+                # OO XO
+                # Xx Xx
+                tNW = self.blocks['N1']
+            elif qNW == 192 or qNW == 64:
+                # OX XX
+                # Ox Ox
+                tNW = self.blocks['W1']
+            elif qNW == 128:
+                # OX
+                # Xx
+                tNW = self.blocks['iNW']
+            else:
+                # XX
+                # Xx
+                tNW = self.blocks['mNW']
 
-                    if qNE == 7 or qNE == 5:
-                        # 111
-                        # OO OX
-                        # xO xO
-                        tNE = self.blocks['NE']
-                    elif qNE == 3 or qNE == 1:
-                        # OO OX
-                        # xX xX
-                        tNE = self.blocks['N2']
-                    elif qNE == 6 or qNE == 4:
-                        # XO XX
-                        # xO xO
-                        tNE = self.blocks['E1']
-                    elif qNE == 2:
-                        # X0
-                        # xX
-                        tNE = self.blocks['iNE']
-                    else:
-                        # XX
-                        # xX
-                        tNE = self.blocks['mNE']
+            if qNE == 7 or qNE == 5:
+                # 111
+                # OO OX
+                # xO xO
+                tNE = self.blocks['NE']
+            elif qNE == 3 or qNE == 1:
+                # OO OX
+                # xX xX
+                tNE = self.blocks['N2']
+            elif qNE == 6 or qNE == 4:
+                # XO XX
+                # xO xO
+                tNE = self.blocks['E1']
+            elif qNE == 2:
+                # X0
+                # xX
+                tNE = self.blocks['iNE']
+            else:
+                # XX
+                # xX
+                tNE = self.blocks['mNE']
 
-                    if qSE == 28 or qSE == 20:
-                        # 111
-                        # xO xO
-                        # OO OX
-                        tSE = self.blocks['SE']
-                    elif qSE == 12 or qSE == 4:
-                        # xO xO
-                        # XO XX
-                        tSE = self.blocks['E2']
-                    elif qSE == 24 or qSE == 16:
-                        # xX xX
-                        # OO OX
-                        tSE = self.blocks['S2']
-                    elif qSE == 8:
-                        # xX
-                        # XO
-                        tSE = self.blocks['iSE']
-                    else:
-                        # xX
-                        # XX
-                        tSE = self.blocks['mSE']
+            if qSE == 28 or qSE == 20:
+                # 111
+                # xO xO
+                # OO OX
+                tSE = self.blocks['SE']
+            elif qSE == 12 or qSE == 4:
+                # xO xO
+                # XO XX
+                tSE = self.blocks['E2']
+            elif qSE == 24 or qSE == 16:
+                # xX xX
+                # OO OX
+                tSE = self.blocks['S2']
+            elif qSE == 8:
+                # xX
+                # XO
+                tSE = self.blocks['iSE']
+            else:
+                # xX
+                # XX
+                tSE = self.blocks['mSE']
 
-                    if qSW == 112 or qSW == 80:
-                        # 111
-                        # Ox Ox
-                        # OO XO
-                        tSW = self.blocks['SW']
-                    elif qSW == 48 or qSW == 16:
-                        # Xx Xx
-                        # OO XO
-                        tSW = self.blocks['S1']
-                    elif qSW == 96 or qSW == 64:
-                        # Ox Ox
-                        # OX XX
-                        tSW = self.blocks['W2']
-                    elif qSW == 32:
-                        # Xx
-                        # OX
-                        tSW = self.blocks['iSW']
-                    else:
-                        # Xx
-                        # XX
-                        tSW = self.blocks['mSW']
+            if qSW == 112 or qSW == 80:
+                # 111
+                # Ox Ox
+                # OO XO
+                tSW = self.blocks['SW']
+            elif qSW == 48 or qSW == 16:
+                # Xx Xx
+                # OO XO
+                tSW = self.blocks['S1']
+            elif qSW == 96 or qSW == 64:
+                # Ox Ox
+                # OX XX
+                tSW = self.blocks['W2']
+            elif qSW == 32:
+                # Xx
+                # OX
+                tSW = self.blocks['iSW']
+            else:
+                # Xx
+                # XX
+                tSW = self.blocks['mSW']
 
 
-                    # We blit the smaller tiles into a larger one
-                    tile.image.blit(tNW, (0,0))
-                    tile.image.blit(tNE, (16,0))
-                    tile.image.blit(tSE, (16,16))
-                    tile.image.blit(tSW, (0,16))
-                    tile.rect = pygame.rect.Rect((x*32,y*32), (32,32))
-                else:
-                    tile = pygame.sprite.Sprite(self.tiles)
-                    tile.image = self.empty_tile
-                    tile.rect = pygame.rect.Rect((x*32,y*32), self.empty_tile.get_size())
+            # We blit the smaller tiles into a larger one
+            tile.image.blit(tNW, (0,0))
+            tile.image.blit(tNE, (16,0))
+            tile.image.blit(tSE, (16,16))
+            tile.image.blit(tSW, (0,16))
+            tile.rect = pygame.rect.Rect((x*32,y*32), (32,32))
+        else:
+            tile = pygame.sprite.Sprite(self.tiles)
+            tile.image = self.empty_tile
+            tile.rect = pygame.rect.Rect((x*32,y*32), self.empty_tile.get_size())
 
-                # if x == self.start_pos.x/32 and y == self.start_pos.y/32:
-                #     print "startpos", x, y
-                #     pixels = pygame.surfarray.array3d(tile.image)
-                #     pixels[::,::31] = [255,0,0]
-                #     pixels[::31,::] = [255,0,0]
-                    # tile.image = pygame.surfarray.make_surface(pixels)
+        self.sprites[x,y] = tile
+
+        # if x == self.start_pos.x/32 and y == self.start_pos.y/32:
+        #     print "startpos", x, y
+        #     pixels = pygame.surfarray.array3d(tile.image)
+        #     pixels[::,::31] = [255,0,0]
+        #     pixels[::31,::] = [255,0,0]
+            # tile.image = pygame.surfarray.make_surface(pixels)
 
 class WorldLevel(MazeLevel):
+
+    def __init__(self):
+        super(WorldLevel, self).__init__()
 
     def generate(self):
         self.level = numpy.zeros((self.h_size, self.v_size))
@@ -375,6 +382,17 @@ class WorldLevel(MazeLevel):
         (base_x, base_y) = (16,14)
         self.blocks = self.get_blocks(base_x, base_y)
         self.empty_tile = self.tileset.subsurface(pygame.Rect(0,0,32,32))
+
+    def dig_out(self, tile):
+        if tile in self.blockers:
+            self.blockers.remove(tile)
+            (x,y) = (tile.rect.x/32, tile.rect.y/32)
+            self.level[x, y] = 1
+            # We need to relayout surrounding tiles
+            for ny in range(y-1,y+2):
+                for nx in range(x-1,x+2):
+                    self.sprites[nx,ny].remove(self.tiles, self.blockers)
+                    self.autolayout(nx, ny)
 
 if __name__ == '__main__':
     m = MazeLevel()
