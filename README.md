@@ -1,11 +1,16 @@
-minigame
-========
+ld29
+====
+Theme is "Beneath the surface"
 
-Basic game engine using pygame.
+Ideas
+=====
 
-This is my attempt at a basic game framework.
-The code will be firt based on Richard Jones tutorial on pygame (https://bitbucket.org/r1chardj0n3s/pygame-tutorial)
+Mole digging to find things
 
-I will then add various improvments based on my own needs.
+Go the marine way and have fishes
 
-This code will most certainly be the base for my LD48 entry on 2014, April 25th-28th compo (http://www.ludumdare.com/compo/)
+Icebergs
+
+Oil findings (management, economics)
+
+Mars rover
