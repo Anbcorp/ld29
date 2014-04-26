@@ -2,15 +2,36 @@ ld29
 ====
 Theme is "Beneath the surface"
 
-Ideas
-=====
+Game
+====
 
-Mole digging to find things
+Mole digging to find things, trying to dig out as must gems as possible before
+running out of time. Worms can add some times.
 
-Go the marine way and have fishes
+This is inspired from an actual game I played a while ago. I can't seem to
+remember its name thoug
 
-Icebergs
+Status
+======
 
-Oil findings (management, economics)
+* Sprites are mostly placeholders
+* No sound, no music
 
-Mars rover
+* Can dig down using 'down' key. I need to implement a proper action for digging
+  as it must be seperated from movements.
+
+* No bonuses, no score, no timing
+
+* No level boundaries
+
+* Physics and movement need rework
+
+Thoughts regarding basecode
+===========================
+
+Entities implementation (composition) is kinda in the way and prevent me from
+thinking about quick solution to implements things.
+Movements, actions and physics are a complete mess and split apart.
+
+So far, I find that level generation and autolayout are pretty useful as I can
+change tiles easily
