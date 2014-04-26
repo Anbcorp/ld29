@@ -1,0 +1,20 @@
+player:
+    image: 'res/hero.png'
+    start: [320,240]
+    speed: 300
+
+ork:
+    image: 'res/ork.png'
+    start: [320,240]
+    speed: 120
+
+block:
+    image: 'res/block.png'
+
+bullet:
+    image: 'res/bullet.png'
+    hitsound: 'res/bullet_hit.ogg'
+
+level:
+    size: [33,33]
+    image: 'res/tilea2.png'
