@@ -20,6 +20,9 @@ class Displacement(object):
     def move(self, xoffset, yoffset, colliding_sprites):
         pass
 
+    def apply_gravity(self):
+        pass
+
 class BaseDisplacement(Displacement):
     """
     Handle basic moving of objects with simple collision handling
@@ -64,6 +67,9 @@ class BaseDisplacement(Displacement):
 
         if xoffset != 0 and yoffset != 0 :
             raise ValueError()
+
+        if entity.solid == False :
+            return []
 
         sprite = None
         topbottom = False
@@ -118,6 +124,10 @@ class BaseDisplacement(Displacement):
             if xoffset < 0:
                 self.entity.rect.left = sprite.rect.right + 1
 
+    def apply_gravity(self):
+        if not self.entity.resting:
+            self.entity.vector[1] += 10
+
 class ReboundDisplacement(BaseDisplacement):
     """
     Anything we collide with will produce a (more or less) realistic rebound
@@ -139,4 +149,3 @@ class ReboundDisplacement(BaseDisplacement):
                 self.entity.rect.right = sprite.rect.left - 1
             if xoffset < 0:
                 self.entity.rect.left = sprite.rect.right + 1
-

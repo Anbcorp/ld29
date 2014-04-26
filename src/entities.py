@@ -130,7 +130,7 @@ class PlayerControlledBrain(DumbBrain):
                 self.entity.vector[0] = +self.entity.h_speed * delta_time
                 self.entity.direction = RIGHT
             if key == pygame.K_UP:
-                self.entity.vector[1] = -self.entity.h_speed * delta_time
+                self.entity.vector[1] = -20#-self.entity.h_speed #* delta_time
                 self.entity.direction = UP
             if key == pygame.K_DOWN:
                 self.entity.vector[1] = +self.entity.v_speed * delta_time
@@ -145,6 +145,7 @@ class Player(Entity):
 
     def __init__(self, game, *groups):
         super(Player, self).__init__('player', *groups)
+        self.solid = True
 
         self.brain = PlayerControlledBrain(self)
         game.event_listener.register_listener(self.brain, pygame.KEYDOWN)
@@ -169,5 +170,6 @@ class Player(Entity):
                 "takes a tuple of coordinates (x,y) or a Rect()")
 
     def move(self, delta_time, game):
+        self.displacement.apply_gravity()
         self.displacement.move(self.vector[0], self.vector[1],
             game.current_level.blockers)

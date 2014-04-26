@@ -19,6 +19,8 @@ class Entity(pygame.sprite.Sprite):
 
         self.tileset = pygame.image.load(resources.getImage(name))
         self.direction = RIGHT
+        self.solid = True
+        self.resting = False
 
     @property
     def h_speed(self):
