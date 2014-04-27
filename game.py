@@ -45,20 +45,27 @@ class Game(object):
     def __init__(self):
         self.event_listener = EventListener(self)
         self.running = True
+        self.finishing = False
         self.level = level.WorldLevel
         self.selected_tile = None
+        self.font = pygame.font.Font(None, 40)
+        self.rem_time = 0.
+        self.started = False
+
         print 'Started game', id(self)
 
     def process_key_event(self, event):
-        # if event.key == pygame.K_n:
-        #     print "New level"
-        #     # TODO: should reset entities
-        #     self.current_level = self.level()
-        #     self.player.move_to(self.current_level.start_pos)
+        if not self.started and not event.key == pygame.K_r:
+            self.started = True
         if event.key == pygame.K_ESCAPE:
             self.quit()
+        if event.key == pygame.K_r:
+            self.running = True
 
     def process_mouse_event(self, event):
+        if (event.type == pygame.MOUSEBUTTONDOWN or
+            event.type == pygame.MOUSEBUTTONUP):
+            self.started = True
         if event.type == pygame.MOUSEMOTION:
             (mx, my) = event.pos
             mx += self.entities.camera[0]
@@ -70,6 +77,7 @@ class Game(object):
 
     def quit(self):
         self.running = False
+        self.finishing = False
 
     def set_selected(self, x, y):
         if self.selected_tile != None:
@@ -81,21 +89,49 @@ class Game(object):
         self.selected_tile = (x,y)
 
     def do_splash(self, screen):
-        font = pygame.font.Font(None, 40)
         color = (255,255,255)
-        txt = font.render('YAADIG', False, color)
+        txt = self.font.render('YAADIG', False, color)
         screen.blit(txt, (320 - txt.get_width()/2,40))
-        txt = font.render('Loading...', False, color)
+        txt = self.font.render('Loading...', False, color)
         screen.blit(txt, (320 - txt.get_width()/2, 400))
         screen.blit(pygame.image.load('res/splash.png'), (60,100))
         pygame.display.flip()
 
+    def draw_gui(self, screen):
+        score = self.font.render('%09d' % self.player.score,
+                False, (255,255,255))
+        screen.blit(score, (4,4))
+        r_min = self.rem_time / 60
+        r_sec = self.rem_time % 60
+        r_time = self.font.render('%d:%02d'%(r_min, r_sec),
+            False, (255,255,255))
+        screen.blit(r_time, (640-r_time.get_width()-4, 4))
+
+    def do_finish(self, screen):
+        txt = self.font.render('Game Over !', False, (255,255,255))
+        screen.blit(txt, (320-txt.get_width()/2, 40))
+        pygame.display.flip()
+        self.finishing = True
+
+        while self.finishing:
+            self.event_listener.process_events()
+            if self.running:
+                self.started = False
+                self.finishing = False
+                self.main(screen)
+
+    def init(self, screen):
+        self.event_listener.register_listener(self, pygame.KEYDOWN)
+        self.event_listener.register_listener(self, pygame.MOUSEBUTTONDOWN)
+        self.main(screen)
+
     def main(self, screen):
         clock = pygame.time.Clock()
+        self.rem_time = 8.
+
 
         self.do_splash(screen)
         self.current_level = self.level()
-        print "ok level"
 
         entities = level.ScrolledGroup()
         self.entities = entities
@@ -103,22 +139,15 @@ class Game(object):
         self.player = Player(self, entities)
         self.player.move_to(self.current_level.start_pos)
 
-        self.event_listener.register_listener(self, pygame.KEYDOWN)
-        self.event_listener.register_listener(self, pygame.MOUSEBUTTONDOWN)
-
-        # for i in range(0,100):
-        #     ork = Enemy('ork', entities        )
-        #     # TODO: starting pos and proper collbox for enemies
-        #     ork.rect = self.player.rect.copy()
-        #     ork.rect.width = 16
-        #     ork.rect.height = 16
         e_time = 0
         while self.running:
             dt = clock.tick(30)
 
-            e_time += dt / 1000.
+            if self.started:
+                e_time += dt / 1000.
             if e_time >= 1:
-                print "score: ", self.player.score
+                print e_time
+                self.rem_time -= int(e_time)
                 e_time = 0
             # process events
             self.event_listener.process_events()
@@ -130,9 +159,17 @@ class Game(object):
             # draw screen
             screen.fill((255,0,0))
             self.current_level.draw(screen)
-          #  tiles.draw(screen)
             entities.draw(screen)
+            self.draw_gui(screen)
             pygame.display.flip()
+
+            if self.rem_time <= 0:
+                self.started = False
+                self.running = False
+                self.finishing = True
+
+        if self.finishing:
+            self.do_finish(screen)
 
 if __name__ == '__main__':
     pygame.mixer.pre_init(buffer=2048)
@@ -140,4 +177,4 @@ if __name__ == '__main__':
     # TODO : screen size from conf ? Or at least constant
     screen = pygame.display.set_mode((640,480), pygame.HWSURFACE|pygame.DOUBLEBUF)
 
-    Game().main(screen)
+    Game().init(screen)

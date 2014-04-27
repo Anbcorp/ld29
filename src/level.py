@@ -52,10 +52,14 @@ class ScrolledGroup(pygame.sprite.LayeredUpdates):
 
     def draw(self, surface):
         for sprite in self.sprites():
-            surface.blit(sprite.image, (
-                sprite.rect.x - self._camera_x,
-                sprite.rect.y - self._camera_y)
-            )
+            try:
+                surface.blit(sprite.image, (
+                    sprite.rect.x - self._camera_x,
+                    sprite.rect.y - self._camera_y)
+                )
+            except Exception as excep:
+                print sprite.image, sprite
+                raise excep
 
 class Level(object):
     """
@@ -385,8 +389,9 @@ class MazeLevel(Level):
 
     def unselect(self, x, y):
         tile = self.sprites[x,y]
-        tile.image = self.selected_orig
-        self.selected_orig = None
+        if self.selected_orig:
+            tile.image = self.selected_orig
+            self.selected_orig = None
 
     def add_bonuses(self, tile):
         pass
