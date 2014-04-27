@@ -153,7 +153,6 @@ class PlayerControlledBrain(DumbBrain):
 
         # process attacks
         if 1 in self.button_pressed and self.dig_delay < 0:
-            print "mbdown"
             self.dig_delay = 15
 
 

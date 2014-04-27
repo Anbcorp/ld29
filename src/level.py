@@ -429,7 +429,6 @@ class WorldLevel(MazeLevel):
             return
 
         if hasattr(tile, 'bonus') and tile.bonus :
-            print "reset bonus", tile.bonus
             # reset previous bonus
             self.set_bonus(tile, tile.bonus, reset=True)
         else:
@@ -453,7 +452,6 @@ class WorldLevel(MazeLevel):
         # if (tile.rect.y/32) < bonus['depth']:
         #     return
         tile.image.blit(bonus['sprite'], (0,0))
-        print reset, tile.hitpoints
         if not reset :
             tile.value = bonus['value']
             tile.hitpoints = bonus['hardness']
@@ -461,13 +459,11 @@ class WorldLevel(MazeLevel):
 
     def dig_out(self, tile):
         if tile.hitpoints > 0:
-            print tile.hitpoints
             tile.hitpoints -= 1
 
             anim = EffectAnimation(0, [])
             anim.rect = tile.rect.copy()
             self.tiles.add(anim, layer=1)
-            print self.tiles.get_bottom_layer()
         else:
             if tile in self.blockers:
                 self.blockers.remove(tile)
