@@ -112,10 +112,14 @@ class Game(object):
         #     ork.rect = self.player.rect.copy()
         #     ork.rect.width = 16
         #     ork.rect.height = 16
-
+        e_time = 0
         while self.running:
             dt = clock.tick(30)
 
+            e_time += dt / 1000.
+            if e_time >= 1:
+                print "score: ", self.player.score
+                e_time = 0
             # process events
             self.event_listener.process_events()
 

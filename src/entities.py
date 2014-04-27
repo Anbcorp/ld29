@@ -176,6 +176,7 @@ class Player(Entity):
 
         self.e_time = 0
         self.digged = False
+        self.score = 0
 
     @property
     def digging(self):
@@ -253,5 +254,5 @@ class Player(Entity):
         if block in self.game.current_level.blockers and self.digging:
             # Hack, use the down animation for digging
             self.direction = DOWN
-            self.game.current_level.dig_out(block)
+            self.score += self.game.current_level.dig_out(block)
             self.digged = True

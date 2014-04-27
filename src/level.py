@@ -477,6 +477,8 @@ class WorldLevel(MazeLevel):
                 anim = EffectAnimation(1, [])
                 anim.rect = tile.rect.copy()
                 self.tiles.add(anim, layer=1)
+                return tile.value
+        return 0
 
 if __name__ == '__main__':
     m = MazeLevel()
