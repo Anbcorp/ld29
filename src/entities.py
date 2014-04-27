@@ -254,5 +254,9 @@ class Player(Entity):
         if block in self.game.current_level.blockers and self.digging:
             # Hack, use the down animation for digging
             self.direction = DOWN
-            self.score += self.game.current_level.dig_out(block)
+            digvalue = self.game.current_level.dig_out(block)
+            if digvalue < 0 :
+                self.game.add_time()
+            else :
+                self.score += digvalue
             self.digged = True

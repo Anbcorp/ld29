@@ -120,6 +120,9 @@ class Game(object):
                 self.finishing = False
                 self.main(screen)
 
+    def add_time(self):
+        self.rem_time += 20
+
     def init(self, screen):
         self.event_listener.register_listener(self, pygame.KEYDOWN)
         self.event_listener.register_listener(self, pygame.MOUSEBUTTONDOWN)
@@ -129,7 +132,9 @@ class Game(object):
         clock = pygame.time.Clock()
         self.rem_time = 8.
 
-
+        # draw screen
+        screen.fill((0,0,0))
+        pygame.display.flip()
         self.do_splash(screen)
         self.current_level = self.level()
 
@@ -140,15 +145,21 @@ class Game(object):
         self.player.move_to(self.current_level.start_pos)
 
         e_time = 0
+        w_time = 0
         while self.running:
+
             dt = clock.tick(30)
 
             if self.started:
                 e_time += dt / 1000.
+                w_time += dt / 1000.
             if e_time >= 1:
-                print e_time
                 self.rem_time -= int(e_time)
                 e_time = 0
+            if w_time >= 3:
+                self.current_level.add_worm()
+                print self.rem_time, self.current_level.worms_count
+                w_time = 0
             # process events
             self.event_listener.process_events()
 
@@ -156,17 +167,18 @@ class Game(object):
             entities.update(dt / 1000., self)
             self.current_level.update(dt / 1000., self)
 
-            # draw screen
-            screen.fill((255,0,0))
             self.current_level.draw(screen)
             entities.draw(screen)
             self.draw_gui(screen)
-            pygame.display.flip()
 
             if self.rem_time <= 0:
                 self.started = False
                 self.running = False
                 self.finishing = True
+                fog = pygame.Surface((640,480))
+                fog.fill((128,128,128,120))
+                screen.blit(fog, (0,0), special_flags = pygame.BLEND_RGBA_MULT)
+            pygame.display.flip()
 
         if self.finishing:
             self.do_finish(screen)

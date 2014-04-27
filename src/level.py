@@ -401,17 +401,21 @@ class WorldLevel(MazeLevel):
 
     def __init__(self):
         self.bonuses = {
-            'diamond':{'value':1000, 'rarity':2, 'depth':70, 'hardness':4,
+            'diamond':{'value':1000, 'rarity':2, 'mindepth':50, 'hardness':4,
                 'sprite': self.bonus_set.subsurface(pygame.Rect(0,0,32,32))},
-            'gold':{'value':500, 'rarity':5, 'depth':50, 'hardness':3,
+            'gold':{'value':500, 'rarity':5, 'mindepth':35, 'hardness':3,
                 'sprite': self.bonus_set.subsurface(pygame.Rect(32,0,32,32))},
-            'silver':{'value':250, 'rarity':15, 'depth':25, 'hardness':2,
+            'silver':{'value':250, 'rarity':15, 'mindepth':20, 'hardness':2,
                 'sprite': self.bonus_set.subsurface(pygame.Rect(64,0,32,32))},
-            'copper':{'value':100, 'rarity':25, 'depth':10, 'hardness':1,
+            'copper':{'value':100, 'rarity':25, 'mindepth':10, 'hardness':1,
                 'sprite': self.bonus_set.subsurface(pygame.Rect(96,0,32,32))},
-
+            'worm':{'value':-1, 'rarity':10, 'mindepth':1, 'hardness':0,
+                'maxdepth':15,
+                'sprite': self.bonus_set.subsurface(pygame.Rect(128,0,32,32))}
         }
 
+        self.worms_count = 0
+        self.worms_max = 20
         super(WorldLevel, self).__init__()
 
 
@@ -449,18 +453,41 @@ class WorldLevel(MazeLevel):
                         self.set_bonus(tile, bonus_name)
                         break;
 
+    def add_worm(self):
+        if self.worms_count >= self.worms_max:
+            return False
+
+        for i in range(0,100):
+            tx = random.randint(0,self.h_size-1)
+            ty = random.randint(self.bonuses['worm']['mindepth'],
+                self.bonuses['worm']['maxdepth'])
+            tile = self.sprites[tx, ty]
+
+            if self.level[tx, ty] or tile.bonus != 'None':
+                continue
+
+            return self.set_bonus(tile, 'worm')
+
     def set_bonus(self, tile, bonus_name, reset=False):
         bonus = self.bonuses.get(bonus_name, None)
         if not bonus :
-            return
-        # print tile.rect.y, bonus['depth']
-        # if (tile.rect.y/32) < bonus['depth']:
-        #     return
+            return False
+
+        # do not set bonus if the depth is not proper
+        if (tile.rect.y/32) < bonus['mindepth']:
+            return False
+
+        bonus_max_depth = bonus.get('maxdepth', 0)
+        if bonus_max_depth > 0 and (tile.rect.y/32) > bonus_max_depth:
+            return False
+
         tile.image.blit(bonus['sprite'], (0,0))
         if not reset :
             tile.value = bonus['value']
             tile.hitpoints = bonus['hardness']
             tile.bonus = bonus_name
+            if tile.bonus == 'worm':
+                self.worms_count += 1
 
     def dig_out(self, tile):
         if tile.hitpoints > 0:
@@ -472,6 +499,8 @@ class WorldLevel(MazeLevel):
         else:
             if tile in self.blockers:
                 self.blockers.remove(tile)
+                if tile.bonus == 'worm':
+                    self.worms_count -= 1
                 (x,y) = (tile.rect.x/32, tile.rect.y/32)
                 self.level[x, y] = 1
                 # We need to relayout surrounding tiles
