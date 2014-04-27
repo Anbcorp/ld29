@@ -35,7 +35,6 @@ class EventListener(object):
                 for listener in self.mouse_listeners:
                     listener.process_mouse_event(event)
             elif event.type == pygame.MOUSEMOTION:
-                print event.pos
                 for listener in self.mouse_listeners:
                     listener.process_mouse_event(event)
 

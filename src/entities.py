@@ -117,7 +117,7 @@ class PlayerControlledBrain(DumbBrain):
         if event.type == pygame.MOUSEBUTTONDOWN:
                 # flag the down button and save the clicked position
                 self.button_pressed.add(event.button)
-                self.interact_position = (event.pos[0], event.pos[1])
+                self.interact_position = event.pos
 
         if event.type == pygame.MOUSEBUTTONUP:
             print "MB up"
@@ -126,6 +126,10 @@ class PlayerControlledBrain(DumbBrain):
                 self.interact_position = None
             except KeyError:
                 pass
+
+        if event.type == pygame.MOUSEMOTION and 1 in self.button_pressed:
+            print 'button down', event.pos
+            self.interact_position = event.pos
 
     def processInput(self, delta_time, game):
         atkpos = self.entity.rect.copy()
@@ -211,13 +215,10 @@ class Player(Entity):
 
             # Can't dig blocks that are too far away
             (self_x, self_y) = (self.rect.centerx/32, self.rect.centery/32)
-            print dig_x, dig_y
-            print "sqrt( (%d-%d)2+(%d-%d)2 )" % (dig_x, self_x, dig_y, self_y)
             block_distance = math.sqrt(
                 math.pow(dig_x - self_x, 2) +
                 math.pow(dig_y - self_y, 2)
                 )
-            print "distance = ", block_distance
             if block_distance >= 2.5:
                 return
             dig_ent = self.game.current_level.sprites[dig_x, dig_y]
@@ -227,7 +228,6 @@ class Player(Entity):
         if self.jumping:
             self.vector[1] -= 20
             self.resting = False
-            print self.vector
         self.displacement.apply_gravity()
         self.displacement.move(self.vector[0], self.vector[1],
             game.current_level.blockers)
