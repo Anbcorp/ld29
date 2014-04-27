@@ -125,8 +125,7 @@ class BaseDisplacement(Displacement):
                 self.entity.rect.left = sprite.rect.right + 1
 
     def apply_gravity(self):
-        if not self.entity.resting:
-            self.entity.vector[1] += 10
+        self.entity.vector[1] += 10
 
 class ReboundDisplacement(BaseDisplacement):
     """
