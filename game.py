@@ -64,14 +64,14 @@ class Game(object):
 
         entities = level.ScrolledGroup()
         self.entities = entities
-        self.entities.debug = True
+        self.entities.debug = False
         self.player = Player(self, entities)
         self.player.move_to(self.current_level.start_pos)
 
         self.event_listener.register_listener(self, pygame.KEYDOWN)
 
         # for i in range(0,100):
-        #     ork = Enemy('ork', entities)
+        #     ork = Enemy('ork', entities        )
         #     # TODO: starting pos and proper collbox for enemies
         #     ork.rect = self.player.rect.copy()
         #     ork.rect.width = 16

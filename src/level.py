@@ -96,7 +96,6 @@ class BasicLevel(Level):
         block = tiles.subsurface(pygame.Rect(6*32,3*32,32,32))
 
         self.empty_tile = tiles.subsurface(pygame.Rect(0,0,32,32))
-        print block.get_size()
         # TODO: level generation here
         # TODO: arbitrary level sizes do not work (empty wall) is not a multiple of 32
         for x in range(0, h_size, 32):
@@ -217,7 +216,6 @@ class MazeLevel(Level):
 
     def autolayout(self, x, y):
         if self.level[x,y] == 0:
-            print 'layouting', x, y
             # place tiles according to surroundings
             # the resulting surface is 32x32
             tile = pygame.sprite.Sprite(self.blockers)
@@ -361,8 +359,6 @@ class MazeLevel(Level):
 
         self.sprites[x,y] = tile
         tile.hitpoints = 10
-        # if x == self.start_pos.x/32 and y == self.start_pos.y/32:
-        #     print "startpos", x, y
 
     def outline(self, tile):
         pixels = pygame.surfarray.array3d(tile.image)

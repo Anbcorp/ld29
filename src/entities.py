@@ -96,6 +96,7 @@ class PlayerControlledBrain(DumbBrain):
         self.key_pressed = set()
         self.atks = []
         self.digging = False
+        self.jumping = False
 
     def think(self, delta_time, game):
         self.processInput(delta_time, game)
@@ -124,6 +125,7 @@ class PlayerControlledBrain(DumbBrain):
         atkpos.y += 10
         self.entity.vector = [0,0]
         self.digging = False
+        self.jumping = False
         for key in self.key_pressed:
             if key == pygame.K_LEFT:
                 self.entity.vector[0] = -self.entity.h_speed * delta_time
@@ -136,12 +138,14 @@ class PlayerControlledBrain(DumbBrain):
                 if pygame.K_SPACE in self.key_pressed:
                     self.digging = True
             if key == pygame.K_UP:
-                self.entity.vector[1] = -20#-self.entity.h_speed #* delta_time
                 self.entity.direction = UP
                 if pygame.K_SPACE in self.key_pressed:
                     self.digging = True
+                else:
+                    self.entity.vector[1] = -20
+                    self.jumping = True
             if key == pygame.K_DOWN:
-                self.entity.vector[1] = +self.entity.v_speed * delta_time
+                # self.entity.vector[1] = +self.entity.v_speed * delta_time
                 self.entity.direction = DOWN
                 if pygame.K_SPACE in self.key_pressed:
                     self.digging = True
@@ -169,9 +173,22 @@ class Player(Entity):
         self.displacement = BaseDisplacement(self)
         self.displacement.set_speed(resources.getValue('%s.speed' % 'player'))
 
+        self.e_time = 0
+
     @property
     def digging(self):
         return self.brain.digging
+
+    @property
+    def jumping(self):
+        return self.brain.jumping
+
+    def update(self, delta_time, game):
+        self.e_time += delta_time
+        super(Player, self).update(delta_time, game)
+        if self.e_time >= 1:
+            print self.rect.x, self.rect.y
+            self.e_time = 0
 
     def move_to(self, new_position):
         if isinstance(new_position, list) or isinstance(new_position, tuple):
@@ -196,9 +213,13 @@ class Player(Entity):
             if self.direction == DOWN:
                 (dig_x, dig_y) = (self.rect.centerx/32, self.rect.centery/32 + 1)
 
-            print dig_x, dig_y
             dig_ent = self.game.current_level.sprites[dig_x, dig_y]
             self.dig(dig_ent)
+
+        if self.jumping:
+            self.jump_delay = 0.5*30
+
+
 
     def move(self, delta_time, game):
         self.displacement.apply_gravity()
@@ -206,15 +227,10 @@ class Player(Entity):
             game.current_level.blockers)
 
     def touched_by(self, entity):
-        if entity in self.game.current_level.blockers and self.digging:
-            entity.hitpoints -=1
-            print entity.hitpoints
-            if entity.hitpoints <=0 :
-                self.game.current_level.dig_out(entity)
+        pass
 
-    def dig(self, entity):
-        if entity in self.game.current_level.blockers and self.digging:
-            entity.hitpoints -=1
-            print entity.hitpoints
-            if entity.hitpoints <=0 :
-                self.game.current_level.dig_out(entity)
+    def dig(self, block):
+        if block in self.game.current_level.blockers and self.digging:
+            block.hitpoints -=1
+            if block.hitpoints <=0 :
+                self.game.current_level.dig_out(block)
