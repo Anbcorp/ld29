@@ -352,19 +352,23 @@ class MazeLevel(Level):
             tile.image.blit(tSE, (16,16))
             tile.image.blit(tSW, (0,16))
             tile.rect = pygame.rect.Rect((x*32,y*32), (32,32))
+            self.outline(tile)
+
         else:
             tile = pygame.sprite.Sprite(self.tiles)
             tile.image = self.empty_tile
             tile.rect = pygame.rect.Rect((x*32,y*32), self.empty_tile.get_size())
 
         self.sprites[x,y] = tile
-
+        tile.hitpoints = 10
         # if x == self.start_pos.x/32 and y == self.start_pos.y/32:
         #     print "startpos", x, y
-        #     pixels = pygame.surfarray.array3d(tile.image)
-        #     pixels[::,::31] = [255,0,0]
-        #     pixels[::31,::] = [255,0,0]
-            # tile.image = pygame.surfarray.make_surface(pixels)
+
+    def outline(self, tile):
+        pixels = pygame.surfarray.array3d(tile.image)
+        pixels[::,::31] = [0,0,0]
+        pixels[::31,::] = [0,0,0]
+        tile.image = pygame.surfarray.make_surface(pixels)
 
 class WorldLevel(MazeLevel):
 

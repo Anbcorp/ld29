@@ -128,21 +128,28 @@ class PlayerControlledBrain(DumbBrain):
             if key == pygame.K_LEFT:
                 self.entity.vector[0] = -self.entity.h_speed * delta_time
                 self.entity.direction = LEFT
+                if pygame.K_SPACE in self.key_pressed:
+                    self.digging = True
             if key == pygame.K_RIGHT:
                 self.entity.vector[0] = +self.entity.h_speed * delta_time
                 self.entity.direction = RIGHT
+                if pygame.K_SPACE in self.key_pressed:
+                    self.digging = True
             if key == pygame.K_UP:
                 self.entity.vector[1] = -20#-self.entity.h_speed #* delta_time
                 self.entity.direction = UP
+                if pygame.K_SPACE in self.key_pressed:
+                    self.digging = True
             if key == pygame.K_DOWN:
                 self.entity.vector[1] = +self.entity.v_speed * delta_time
                 self.entity.direction = DOWN
-                self.digging = True
+                if pygame.K_SPACE in self.key_pressed:
+                    self.digging = True
 
         # process saved attacks directions and actually fire
-        for pos in self.atks:
-            Arrow(atkpos, pos, game, game.entities)
-        self.atks = []
+        # for pos in self.atks:
+        #     Arrow(atkpos, pos, game, game.entities)
+        # self.atks = []
 
 class Player(Entity):
 
@@ -177,6 +184,22 @@ class Player(Entity):
             raise ValueError("%s.move_to " % (self.__class__) +
                 "takes a tuple of coordinates (x,y) or a Rect()")
 
+    def think(self, delta_time, game):
+        self.brain.think(delta_time, game)
+        if self.digging :
+            if self.direction == LEFT:
+                (dig_x, dig_y) = (self.rect.centerx/32 - 1, self.rect.centery/32)
+            if self.direction == RIGHT:
+                (dig_x, dig_y) = (self.rect.centerx/32 + 1, self.rect.centery/32)
+            if self.direction == UP:
+                (dig_x, dig_y) = (self.rect.centerx/32, self.rect.centery/32 - 1)
+            if self.direction == DOWN:
+                (dig_x, dig_y) = (self.rect.centerx/32, self.rect.centery/32 + 1)
+
+            print dig_x, dig_y
+            dig_ent = self.game.current_level.sprites[dig_x, dig_y]
+            self.dig(dig_ent)
+
     def move(self, delta_time, game):
         self.displacement.apply_gravity()
         self.displacement.move(self.vector[0], self.vector[1],
@@ -184,4 +207,14 @@ class Player(Entity):
 
     def touched_by(self, entity):
         if entity in self.game.current_level.blockers and self.digging:
-            self.game.current_level.dig_out(entity)
+            entity.hitpoints -=1
+            print entity.hitpoints
+            if entity.hitpoints <=0 :
+                self.game.current_level.dig_out(entity)
+
+    def dig(self, entity):
+        if entity in self.game.current_level.blockers and self.digging:
+            entity.hitpoints -=1
+            print entity.hitpoints
+            if entity.hitpoints <=0 :
+                self.game.current_level.dig_out(entity)
