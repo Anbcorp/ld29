@@ -96,7 +96,7 @@ class PlayerControlledBrain(DumbBrain):
         self.key_pressed = set()
         self.atks = []
         self.digging = False
-        self.jumping = False
+        self.jump_delay = 0
 
     def think(self, delta_time, game):
         self.processInput(delta_time, game)
@@ -125,7 +125,7 @@ class PlayerControlledBrain(DumbBrain):
         atkpos.y += 10
         self.entity.vector = [0,0]
         self.digging = False
-        self.jumping = False
+        self.jump_delay -= 1
         for key in self.key_pressed:
             if key == pygame.K_LEFT:
                 self.entity.vector[0] = -self.entity.h_speed * delta_time
@@ -141,9 +141,8 @@ class PlayerControlledBrain(DumbBrain):
                 self.entity.direction = UP
                 if pygame.K_SPACE in self.key_pressed:
                     self.digging = True
-                else:
-                    self.entity.vector[1] = -20
-                    self.jumping = True
+                elif self.jump_delay <= 0 and self.entity.resting:
+                    self.jump_delay = 0.3*30
             if key == pygame.K_DOWN:
                 # self.entity.vector[1] = +self.entity.v_speed * delta_time
                 self.entity.direction = DOWN
@@ -181,13 +180,13 @@ class Player(Entity):
 
     @property
     def jumping(self):
-        return self.brain.jumping
+        return self.brain.jump_delay > 0
 
     def update(self, delta_time, game):
         self.e_time += delta_time
         super(Player, self).update(delta_time, game)
         if self.e_time >= 1:
-            print self.rect.x, self.rect.y
+            # print self.rect.centerx/32, self.rect.centery/32
             self.e_time = 0
 
     def move_to(self, new_position):
@@ -216,18 +215,20 @@ class Player(Entity):
             dig_ent = self.game.current_level.sprites[dig_x, dig_y]
             self.dig(dig_ent)
 
-        if self.jumping:
-            self.jump_delay = 0.5*30
-
-
-
     def move(self, delta_time, game):
+        if self.jumping:
+            self.vector[1] -= 20
+            self.resting = False
+            print self.vector
         self.displacement.apply_gravity()
         self.displacement.move(self.vector[0], self.vector[1],
             game.current_level.blockers)
 
     def touched_by(self, entity):
-        pass
+        if entity in self.game.current_level.blockers :
+            (x,y) = (entity.rect.x/32, entity.rect.y/32)
+            if y == self.rect.centery/32+1 and x == self.rect.centerx/32:
+                self.resting = True
 
     def dig(self, block):
         if block in self.game.current_level.blockers and self.digging:
