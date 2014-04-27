@@ -132,7 +132,7 @@ class Game(object):
 
     def main(self, screen):
         clock = pygame.time.Clock()
-        self.rem_time = 8.
+        self.rem_time = 180.
 
         # draw screen
         screen.fill((0,0,0))
