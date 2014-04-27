@@ -33,6 +33,10 @@ class EventListener(object):
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 for listener in self.mouse_listeners:
                     listener.process_mouse_event(event)
+            elif event.type == pygame.MOUSEMOTION:
+                print event.pos
+                for listener in self.mouse_listeners:
+                    listener.process_mouse_event(event)
 
 class Game(object):
 
@@ -42,6 +46,7 @@ class Game(object):
         self.event_listener = EventListener(self)
         self.running = True
         self.level = level.WorldLevel
+        self.selected_tile = None
         print 'Started game', id(self)
 
     def process_key_event(self, event):
@@ -53,8 +58,29 @@ class Game(object):
         if event.key == pygame.K_ESCAPE:
             self.quit()
 
+    def process_mouse_event(self, event):
+        if event.type == pygame.MOUSEMOTION:
+            (mx, my) = event.pos
+            mx += self.entities.camera[0]
+            mx /= 32
+            my += self.entities.camera[1]
+            my /= 32
+
+            self.set_selected(mx, my)
+
     def quit(self):
         self.running = False
+
+    def set_selected(self, x, y):
+        if self.selected_tile != None:
+            if x != self.selected_tile[0] or y != self.selected_tile[1]:
+                self.current_level.unselect(*self.selected_tile)
+                self.current_level.select(x,y)
+        else:
+            self.current_level.select(x,y)
+        self.selected_tile = (x,y)
+
+
 
     def main(self, screen):
         clock = pygame.time.Clock()
@@ -69,6 +95,7 @@ class Game(object):
         self.player.move_to(self.current_level.start_pos)
 
         self.event_listener.register_listener(self, pygame.KEYDOWN)
+        self.event_listener.register_listener(self, pygame.MOUSEBUTTONDOWN)
 
         # for i in range(0,100):
         #     ork = Enemy('ork', entities        )

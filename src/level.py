@@ -122,6 +122,8 @@ class MazeLevel(Level):
         self.set_tiles()
         self.sprites = numpy.empty( (self.h_size, self.v_size),
             dtype=pygame.sprite.Sprite)
+        self.select_sprite = pygame.image.load('res/selected.png')
+        self.selected_orig = None
 
         for y in range(0, self.v_size):
             for x in range(0, self.h_size):
@@ -360,11 +362,29 @@ class MazeLevel(Level):
         self.sprites[x,y] = tile
         tile.hitpoints = 10
 
-    def outline(self, tile):
+    def outline(self, tile, color=(0,0,0)):
         pixels = pygame.surfarray.array3d(tile.image)
         pixels[::,::31] = [0,0,0]
         pixels[::31,::] = [0,0,0]
         tile.image = pygame.surfarray.make_surface(pixels)
+
+    def select(self, x, y):
+        print 'select', x, y
+        tile = self.sprites[x,y]
+        self.selected_orig = tile.image
+        newimg = tile.image.copy()
+        # groups = tile.groups()
+        # tile.remove(groups)
+        newimg.blit(self.select_sprite, (0,0))
+        tile.image = newimg
+        # tile.add(groups)
+
+    def unselect(self, x, y):
+        print 'unselect', x, y
+        tile = self.sprites[x,y]
+        tile.image = self.selected_orig
+        self.selected_orig = None
+
 
 class WorldLevel(MazeLevel):
 
