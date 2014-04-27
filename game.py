@@ -48,7 +48,7 @@ class Game(object):
         self.finishing = False
         self.level = level.WorldLevel
         self.selected_tile = None
-        self.font = pygame.font.Font(None, 40)
+        self.font = pygame.font.Font('res/tobago.ttf', 35)
         self.rem_time = 0.
         self.started = False
 
