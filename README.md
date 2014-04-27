@@ -14,6 +14,15 @@ remember its name though.
 Status
 ======
 
+2014/04/28 - 00:30am
+--------------------
+
+Last rush !
+
+* Made something very ugly, hope some people will find it fun
+* Code is a mess, as always
+
+
 2014/04/27 - 11:30am
 --------------------
 

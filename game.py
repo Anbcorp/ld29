@@ -110,6 +110,8 @@ class Game(object):
     def do_finish(self, screen):
         txt = self.font.render('Game Over !', False, (255,255,255))
         screen.blit(txt, (320-txt.get_width()/2, 40))
+        txt = self.font.render('Press R to restart', False, (255,255,255))
+        screen.blit(txt, (320-txt.get_width()/2, 70))
         pygame.display.flip()
         self.finishing = True
 
