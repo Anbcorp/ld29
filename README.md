@@ -9,11 +9,20 @@ Mole digging to find things, trying to dig out as must gems as possible before
 running out of time. Worms can add some times.
 
 This is inspired from an actual game I played a while ago. I can't seem to
-remember its name thoug
+remember its name though.
 
 Status
 ======
 
+2014/04/27 - 11:30am
+--------------------
+
+* Going terraria style, keyboard+mouse ftw!
+* mouse selection is ok, I need to add action on mouse click
+* Jump and gravity are a bit odd, will fix later
+
+2014/04/26 - 11pm
+-----------------
 * Sprites are mostly placeholders
 * No sound, no music
 
