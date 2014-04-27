@@ -94,7 +94,8 @@ class PlayerControlledBrain(DumbBrain):
         super(PlayerControlledBrain, self).__init__(entity)
 
         self.key_pressed = set()
-        self.atks = []
+        self.button_pressed = set()
+        self.interact_position = None
         self.digging = False
         self.jump_delay = 0
 
@@ -114,10 +115,17 @@ class PlayerControlledBrain(DumbBrain):
 
     def process_mouse_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1 :
-                # enqueue attack directions in case of the player clicks faster
-                # than the game can process
-                self.atks.append(event.pos)
+                # flag the down button and save the clicked position
+                self.button_pressed.add(event.button)
+                self.interact_position = (event.pos[0], event.pos[1])
+
+        if event.type == pygame.MOUSEBUTTONUP:
+            print "MB up"
+            try:
+                self.button_pressed.remove(event.button)
+                self.interact_position = None
+            except KeyError:
+                pass
 
     def processInput(self, delta_time, game):
         atkpos = self.entity.rect.copy()
@@ -130,29 +138,21 @@ class PlayerControlledBrain(DumbBrain):
             if key == pygame.K_LEFT:
                 self.entity.vector[0] = -self.entity.h_speed * delta_time
                 self.entity.direction = LEFT
-                if pygame.K_SPACE in self.key_pressed:
-                    self.digging = True
             if key == pygame.K_RIGHT:
                 self.entity.vector[0] = +self.entity.h_speed * delta_time
                 self.entity.direction = RIGHT
-                if pygame.K_SPACE in self.key_pressed:
-                    self.digging = True
             if key == pygame.K_UP:
                 self.entity.direction = UP
-                if pygame.K_SPACE in self.key_pressed:
-                    self.digging = True
-                elif self.jump_delay <= 0 and self.entity.resting:
+                if self.jump_delay <= 0 and self.entity.resting:
                     self.jump_delay = 0.3*30
             if key == pygame.K_DOWN:
                 # self.entity.vector[1] = +self.entity.v_speed * delta_time
                 self.entity.direction = DOWN
-                if pygame.K_SPACE in self.key_pressed:
-                    self.digging = True
 
-        # process saved attacks directions and actually fire
-        # for pos in self.atks:
-        #     Arrow(atkpos, pos, game, game.entities)
-        # self.atks = []
+        # process attacks
+        if 1 in self.button_pressed:
+            self.digging = True
+
 
 class Player(Entity):
 
@@ -202,16 +202,24 @@ class Player(Entity):
 
     def think(self, delta_time, game):
         self.brain.think(delta_time, game)
-        if self.digging :
-            if self.direction == LEFT:
-                (dig_x, dig_y) = (self.rect.centerx/32 - 1, self.rect.centery/32)
-            if self.direction == RIGHT:
-                (dig_x, dig_y) = (self.rect.centerx/32 + 1, self.rect.centery/32)
-            if self.direction == UP:
-                (dig_x, dig_y) = (self.rect.centerx/32, self.rect.centery/32 - 1)
-            if self.direction == DOWN:
-                (dig_x, dig_y) = (self.rect.centerx/32, self.rect.centery/32 + 1)
+        if self.digging and self.brain.interact_position:
+            dig_x = self.brain.interact_position[0] + self.game.entities.camera[0]
+            # adjusting for camera offset
+            dig_x /= 32
+            dig_y = self.brain.interact_position[1] + self.game.entities.camera[1]
+            dig_y /= 32
 
+            # Can't dig blocks that are too far away
+            (self_x, self_y) = (self.rect.centerx/32, self.rect.centery/32)
+            print dig_x, dig_y
+            print "sqrt( (%d-%d)2+(%d-%d)2 )" % (dig_x, self_x, dig_y, self_y)
+            block_distance = math.sqrt(
+                math.pow(dig_x - self_x, 2) +
+                math.pow(dig_y - self_y, 2)
+                )
+            print "distance = ", block_distance
+            if block_distance >= 2.5:
+                return
             dig_ent = self.game.current_level.sprites[dig_x, dig_y]
             self.dig(dig_ent)
 

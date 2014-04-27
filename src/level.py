@@ -413,6 +413,7 @@ class WorldLevel(MazeLevel):
                 for nx in range(x-1,x+2):
                     self.sprites[nx,ny].remove(self.tiles, self.blockers)
                     self.autolayout(nx, ny)
+            self.select(x,y)
 
 if __name__ == '__main__':
     m = MazeLevel()

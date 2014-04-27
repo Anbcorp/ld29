@@ -30,7 +30,8 @@ class EventListener(object):
             if event.type == pygame.KEYDOWN or event.type == pygame.KEYUP:
                 for listener in self.key_listeners:
                     listener.process_key_event(event)
-            elif event.type == pygame.MOUSEBUTTONDOWN:
+            elif (event.type == pygame.MOUSEBUTTONDOWN or
+                        event.type == pygame.MOUSEBUTTONUP):
                 for listener in self.mouse_listeners:
                     listener.process_mouse_event(event)
             elif event.type == pygame.MOUSEMOTION:
@@ -79,8 +80,6 @@ class Game(object):
         else:
             self.current_level.select(x,y)
         self.selected_tile = (x,y)
-
-
 
     def main(self, screen):
         clock = pygame.time.Clock()
