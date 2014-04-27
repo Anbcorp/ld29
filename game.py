@@ -90,7 +90,7 @@ class Game(object):
 
     def do_splash(self, screen):
         color = (255,255,255)
-        txt = self.font.render('YAADIG', False, color)
+        txt = self.font.render('YADIG', False, color)
         screen.blit(txt, (320 - txt.get_width()/2,40))
         txt = self.font.render('Loading...', False, color)
         screen.blit(txt, (320 - txt.get_width()/2, 400))
