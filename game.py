@@ -80,11 +80,20 @@ class Game(object):
             self.current_level.select(x,y)
         self.selected_tile = (x,y)
 
+    def do_splash(self, screen):
+        font = pygame.font.Font(None, 40)
+        color = (255,255,255)
+        txt = font.render('YAADIG', False, color)
+        screen.blit(txt, (320 - txt.get_width()/2,40))
+        txt = font.render('Loading...', False, color)
+        screen.blit(txt, (320 - txt.get_width()/2, 400))
+        screen.blit(pygame.image.load('res/splash.png'), (60,100))
+        pygame.display.flip()
+
     def main(self, screen):
         clock = pygame.time.Clock()
 
-        screen.blit(pygame.image.load('res/splash.png'), (60,100))
-        pygame.display.flip()
+        self.do_splash(screen)
         self.current_level = self.level()
         print "ok level"
 

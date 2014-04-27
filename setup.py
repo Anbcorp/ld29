@@ -1,15 +1,24 @@
 from distutils.core import setup
 from glob import glob
-import py2exe
-import sys
+
 import os
 
-origIsSystemDLL = py2exe.build_exe.isSystemDLL
-def isSystemDLL(pathname):
-        if os.path.basename(pathname).lower() in ( 'libogg-0.dll' , 'sdl_ttf.dll'):
-                return 0
-        return origIsSystemDLL(pathname)
-py2exe.build_exe.isSystemDLL = isSystemDLL
+try:
+    import py2exe
+
+    origIsSystemDLL = py2exe.build_exe.isSystemDLL
+    def isSystemDLL(pathname):
+            if os.path.basename(pathname).lower() in ( 'libogg-0.dll' , 'sdl_ttf.dll'):
+                    return 0
+            return origIsSystemDLL(pathname)
+    py2exe.build_exe.isSystemDLL = isSystemDLL
+except ImportError:
+    pass
+
+try:
+    import py2app
+except ImportError:
+    pass
 
 setup(  name='Yaadig',
         version='0.1',
@@ -19,6 +28,7 @@ setup(  name='Yaadig',
         url='http://github.com/Anbcorp/ld29',
         data_files = [  ('res', glob('res/*.*')) , ('.', ['resources.yaml']) ],
         windows=['game.py'],
+        app=['game.py'],
         options={
             'py2exe': {
                 'includes':[ 'yaml', 'numpy', 'pygame']
