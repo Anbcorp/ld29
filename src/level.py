@@ -5,9 +5,10 @@ import pygame
 import random
 
 from lib import resources
+from lib.animations import EffectAnimation
 from lib.utils import DIRECTIONS, DOWN, LEFT, RIGHT, UP
 
-class ScrolledGroup(pygame.sprite.Group):
+class ScrolledGroup(pygame.sprite.LayeredUpdates):
     """
     This is a sprite Group() whose drawn surface is controlled by camera position
 
@@ -78,8 +79,9 @@ class Level(object):
         self.blockers.update(dt, game)
 
     def draw(self, screen):
-        self.tiles.draw(screen)
         self.blockers.draw(screen)
+        self.tiles.draw(screen)
+
 
 
 class BasicLevel(Level):
@@ -220,8 +222,11 @@ class MazeLevel(Level):
         if self.level[x,y] == 0:
             # place tiles according to surroundings
             # the resulting surface is 32x32
-            tile = pygame.sprite.Sprite(self.blockers)
-            tile.image = pygame.Surface((32,32))
+            if self.sprites[x, y]:
+                tile = self.sprites[x, y]
+            else:
+                tile = pygame.sprite.Sprite(self.blockers)
+                tile.image = pygame.Surface((32,32))
             # get value for 8 tiles surroundings
             def get_adj_tile(x, y):
                 if x > self.h_size-1 or x < 0 :
@@ -353,6 +358,7 @@ class MazeLevel(Level):
             tile.image.blit(tSW, (0,16))
             tile.rect = pygame.rect.Rect((x*32,y*32), (32,32))
             self.outline(tile)
+            self.add_bonuses(tile)
 
         else:
             tile = pygame.sprite.Sprite(self.tiles)
@@ -360,7 +366,6 @@ class MazeLevel(Level):
             tile.rect = pygame.rect.Rect((x*32,y*32), self.empty_tile.get_size())
 
         self.sprites[x,y] = tile
-        tile.hitpoints = 10
 
     def outline(self, tile, color=(0,0,0)):
         pixels = pygame.surfarray.array3d(tile.image)
@@ -369,7 +374,6 @@ class MazeLevel(Level):
         tile.image = pygame.surfarray.make_surface(pixels)
 
     def select(self, x, y):
-        print 'select', x, y
         tile = self.sprites[x,y]
         self.selected_orig = tile.image
         newimg = tile.image.copy()
@@ -380,16 +384,32 @@ class MazeLevel(Level):
         # tile.add(groups)
 
     def unselect(self, x, y):
-        print 'unselect', x, y
         tile = self.sprites[x,y]
         tile.image = self.selected_orig
         self.selected_orig = None
 
+    def add_bonuses(self, tile):
+        pass
 
 class WorldLevel(MazeLevel):
+    bonus_set = pygame.image.load('res/gems.png')
 
     def __init__(self):
+        self.bonuses = {
+            'diamond':{'value':1000, 'rarity':2, 'depth':70, 'hardness':4,
+                'sprite': self.bonus_set.subsurface(pygame.Rect(0,0,32,32))},
+            'gold':{'value':500, 'rarity':5, 'depth':50, 'hardness':3,
+                'sprite': self.bonus_set.subsurface(pygame.Rect(32,0,32,32))},
+            'silver':{'value':250, 'rarity':15, 'depth':25, 'hardness':2,
+                'sprite': self.bonus_set.subsurface(pygame.Rect(64,0,32,32))},
+            'copper':{'value':100, 'rarity':25, 'depth':10, 'hardness':1,
+                'sprite': self.bonus_set.subsurface(pygame.Rect(96,0,32,32))},
+
+        }
+
         super(WorldLevel, self).__init__()
+
+
 
     def generate(self):
         self.level = numpy.zeros((self.h_size, self.v_size))
@@ -401,19 +421,66 @@ class WorldLevel(MazeLevel):
         # TODO: load a specific tile from resources
         (base_x, base_y) = (16,14)
         self.blocks = self.get_blocks(base_x, base_y)
-        self.empty_tile = self.tileset.subsurface(pygame.Rect(0,0,32,32))
+        self.empty_tile = self.tileset.subsurface(pygame.Rect(0,32,32,32))
+
+    def add_bonuses(self, tile):
+
+        if not tile in self.blockers:
+            return
+
+        if hasattr(tile, 'bonus') and tile.bonus :
+            print "reset bonus", tile.bonus
+            # reset previous bonus
+            self.set_bonus(tile, tile.bonus, reset=True)
+        else:
+            tile.bonus = 'None'
+            tile.value = 0
+            tile.hitpoints = 0
+            # set random bonus
+            rand = random.randint(0,100)
+            if rand < 50:
+                for bonus_name in self.bonuses:
+                    bonus = self.bonuses[bonus_name]
+                    if random.randint(0,100) < bonus['rarity']:
+                        self.set_bonus(tile, bonus_name)
+                        break;
+
+    def set_bonus(self, tile, bonus_name, reset=False):
+        bonus = self.bonuses.get(bonus_name, None)
+        if not bonus :
+            return
+        # print tile.rect.y, bonus['depth']
+        # if (tile.rect.y/32) < bonus['depth']:
+        #     return
+        tile.image.blit(bonus['sprite'], (0,0))
+        print reset, tile.hitpoints
+        if not reset :
+            tile.value = bonus['value']
+            tile.hitpoints = bonus['hardness']
+            tile.bonus = bonus_name
 
     def dig_out(self, tile):
-        if tile in self.blockers:
-            self.blockers.remove(tile)
-            (x,y) = (tile.rect.x/32, tile.rect.y/32)
-            self.level[x, y] = 1
-            # We need to relayout surrounding tiles
-            for ny in range(y-1,y+2):
-                for nx in range(x-1,x+2):
-                    self.sprites[nx,ny].remove(self.tiles, self.blockers)
-                    self.autolayout(nx, ny)
-            self.select(x,y)
+        if tile.hitpoints > 0:
+            print tile.hitpoints
+            tile.hitpoints -= 1
+
+            anim = EffectAnimation(0, [])
+            anim.rect = tile.rect.copy()
+            self.tiles.add(anim, layer=1)
+            print self.tiles.get_bottom_layer()
+        else:
+            if tile in self.blockers:
+                self.blockers.remove(tile)
+                (x,y) = (tile.rect.x/32, tile.rect.y/32)
+                self.level[x, y] = 1
+                # We need to relayout surrounding tiles
+                for ny in range(y-1,y+2):
+                    for nx in range(x-1,x+2):
+                        self.autolayout(nx, ny)
+                self.select(x,y)
+                anim = EffectAnimation(1, [])
+                anim.rect = tile.rect.copy()
+                self.tiles.add(anim, layer=1)
 
 if __name__ == '__main__':
     m = MazeLevel()

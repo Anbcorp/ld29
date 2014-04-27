@@ -96,7 +96,7 @@ class PlayerControlledBrain(DumbBrain):
         self.key_pressed = set()
         self.button_pressed = set()
         self.interact_position = None
-        self.digging = False
+        self.dig_delay = 0
         self.jump_delay = 0
 
     def think(self, delta_time, game):
@@ -120,7 +120,6 @@ class PlayerControlledBrain(DumbBrain):
                 self.interact_position = event.pos
 
         if event.type == pygame.MOUSEBUTTONUP:
-            print "MB up"
             try:
                 self.button_pressed.remove(event.button)
                 self.interact_position = None
@@ -128,7 +127,6 @@ class PlayerControlledBrain(DumbBrain):
                 pass
 
         if event.type == pygame.MOUSEMOTION and 1 in self.button_pressed:
-            print 'button down', event.pos
             self.interact_position = event.pos
 
     def processInput(self, delta_time, game):
@@ -136,7 +134,7 @@ class PlayerControlledBrain(DumbBrain):
         atkpos.x += 8
         atkpos.y += 10
         self.entity.vector = [0,0]
-        self.digging = False
+        self.dig_delay -= 1
         self.jump_delay -= 1
         for key in self.key_pressed:
             if key == pygame.K_LEFT:
@@ -154,8 +152,9 @@ class PlayerControlledBrain(DumbBrain):
                 self.entity.direction = DOWN
 
         # process attacks
-        if 1 in self.button_pressed:
-            self.digging = True
+        if 1 in self.button_pressed and self.dig_delay < 0:
+            print "mbdown"
+            self.dig_delay = 15
 
 
 class Player(Entity):
@@ -177,10 +176,11 @@ class Player(Entity):
         self.displacement.set_speed(resources.getValue('%s.speed' % 'player'))
 
         self.e_time = 0
+        self.digged = False
 
     @property
     def digging(self):
-        return self.brain.digging
+        return self.brain.dig_delay > 0
 
     @property
     def jumping(self):
@@ -192,6 +192,14 @@ class Player(Entity):
         if self.e_time >= 1:
             # print self.rect.centerx/32, self.rect.centery/32
             self.e_time = 0
+
+    def animate(self, delta_time, game):
+        # Do not animate if entity have no speed or is not moving
+        if self.h_speed == 0 :
+            return
+        if self.vector[0] == 0 and self.vector[1] == 0:
+            return
+        super(Player, self).animate(delta_time, game)
 
     def move_to(self, new_position):
         if isinstance(new_position, list) or isinstance(new_position, tuple):
@@ -206,7 +214,9 @@ class Player(Entity):
 
     def think(self, delta_time, game):
         self.brain.think(delta_time, game)
-        if self.digging and self.brain.interact_position:
+        if self.digged :
+            self.digged = self.digging
+        if self.digging and self.brain.interact_position and not self.digged:
             dig_x = self.brain.interact_position[0] + self.game.entities.camera[0]
             # adjusting for camera offset
             dig_x /= 32
@@ -223,6 +233,8 @@ class Player(Entity):
                 return
             dig_ent = self.game.current_level.sprites[dig_x, dig_y]
             self.dig(dig_ent)
+        # digged will remain true until digging switch back to false
+
 
     def move(self, delta_time, game):
         if self.jumping:
@@ -240,6 +252,7 @@ class Player(Entity):
 
     def dig(self, block):
         if block in self.game.current_level.blockers and self.digging:
-            block.hitpoints -=1
-            if block.hitpoints <=0 :
-                self.game.current_level.dig_out(block)
+            # Hack, use the down animation for digging
+            self.direction = DOWN
+            self.game.current_level.dig_out(block)
+            self.digged = True
