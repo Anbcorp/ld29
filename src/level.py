@@ -230,7 +230,8 @@ class MazeLevel(Level):
                 tile = self.sprites[x, y]
             else:
                 tile = pygame.sprite.Sprite(self.blockers)
-                tile.image = pygame.Surface((32,32))
+
+            tile.image = pygame.Surface((32,32))
             # get value for 8 tiles surroundings
             def get_adj_tile(x, y):
                 if x > self.h_size-1 or x < 0 :
