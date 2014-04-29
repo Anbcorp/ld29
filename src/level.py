@@ -506,6 +506,10 @@ class WorldLevel(MazeLevel):
                 # We need to relayout surrounding tiles
                 for ny in range(y-1,y+2):
                     for nx in range(x-1,x+2):
+                        if nx > self.h_size - 1 or nx < 0:
+                            continue
+                        if ny > self.v_size - 1 or ny < 0:
+                            continue
                         self.autolayout(nx, ny)
                 self.select(x,y)
                 anim = EffectAnimation(1, [])
