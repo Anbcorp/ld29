@@ -7,11 +7,12 @@ class Displacement(object):
     And how to react to collisions
     """
 
-    def __init__(self, entity):
+    def __init__(self, entity, game):
         self.entity = entity
         self.h_speed = 200
         self.v_speed = 200
         self.vector = [0,0]
+        self.game = game
 
     def set_speed(self, speed):
         self.h_speed = speed
@@ -29,8 +30,8 @@ class BaseDisplacement(Displacement):
 
     Objects will be blocked by anything in colliding_sprites
     """
-    def __init__(self, entity):
-        super(BaseDisplacement, self).__init__(entity)
+    def __init__(self, entity, game):
+        super(BaseDisplacement, self).__init__(entity, game)
 
 
     def move(self, xoffset, yoffset, colliding_sprites):
@@ -41,13 +42,24 @@ class BaseDisplacement(Displacement):
         Returns a list of sprite we collided with
         """
         # We are forced to split the collision problem in two composant
+        level_h_size = self.game.current_level.h_size*32
+        level_v_size = self.game.current_level.v_size*32
         collided_sprites = []
         if xoffset != 0 or yoffset != 0 :
             if xoffset != 0 :
                 self.entity.rect.x += xoffset
+                if self.entity.rect.right > level_h_size -1:
+                    self.entity.rect.right = level_h_size -1
+                if self.entity.rect.left < 0:
+                    self.entity.rect.left = 1
                 collided_sprites = self.collide(xoffset, 0, colliding_sprites)
             if yoffset != 0 :
                 self.entity.rect.y += yoffset
+                if self.entity.rect.bottom > level_v_size -1:
+                    self.entity.rect.bottom = level_v_size -1
+                    self.entity.resting = True
+                if self.entity.rect.top < 0:
+                    self.entity.rect.top = 1
                 collided_sprites += self.collide(0, yoffset, colliding_sprites)
 
         # Launch callbacks for touched sprites

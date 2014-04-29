@@ -171,7 +171,7 @@ class Player(Entity):
         self.animation = EntityAnimation(self)
         self.rect = pygame.Rect((0,0), (16,24))
 
-        self.displacement = BaseDisplacement(self)
+        self.displacement = BaseDisplacement(self, self.game)
         self.displacement.set_speed(resources.getValue('%s.speed' % 'player'))
 
         self.e_time = 0
@@ -241,6 +241,9 @@ class Player(Entity):
             self.vector[1] -= 20
             self.resting = False
         self.displacement.apply_gravity()
+
+
+
         self.displacement.move(self.vector[0], self.vector[1],
             game.current_level.blockers)
 
