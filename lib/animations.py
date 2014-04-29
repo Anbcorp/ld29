@@ -36,9 +36,9 @@ class EntityAnimation(Animation):
                     entity.tileset.subsurface(pygame.Rect(64,96,32,32)),
                     ],
                 'down':[
-                    entity.tileset.subsurface(pygame.Rect(0,0,32,32)),
-                    entity.tileset.subsurface(pygame.Rect(32,0,32,32)),
-                    entity.tileset.subsurface(pygame.Rect(64,0,32,32)),
+                    entity.tileset.subsurface(pygame.Rect(0,96,32,32)),
+                    entity.tileset.subsurface(pygame.Rect(32,96,32,32)),
+                    entity.tileset.subsurface(pygame.Rect(64,96,32,32)),
                     ],
                 'left':[
                     entity.tileset.subsurface(pygame.Rect(0,32,32,32)),
