@@ -137,17 +137,17 @@ class PlayerControlledBrain(DumbBrain):
         self.dig_delay -= 1
         self.jump_delay -= 1
         for key in self.key_pressed:
-            if key == pygame.K_LEFT:
+            if key in (pygame.K_LEFT, pygame.K_a, pygame.K_q):
                 self.entity.vector[0] = -self.entity.h_speed * delta_time
                 self.entity.direction = LEFT
-            if key == pygame.K_RIGHT:
+            if key in(pygame.K_RIGHT, pygame.K_d):
                 self.entity.vector[0] = +self.entity.h_speed * delta_time
                 self.entity.direction = RIGHT
-            if key == pygame.K_UP:
+            if key in (pygame.K_UP, pygame.K_z, pygame.K_w):
                 self.entity.direction = UP
                 if self.jump_delay <= 0 and self.entity.resting:
                     self.jump_delay = 0.3*30
-            if key == pygame.K_DOWN:
+            if key in (pygame.K_DOWN, pygame.K_s):
                 # self.entity.vector[1] = +self.entity.v_speed * delta_time
                 self.entity.direction = DOWN
 
