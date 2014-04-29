@@ -459,8 +459,11 @@ class WorldLevel(MazeLevel):
 
         for i in range(0,100):
             tx = random.randint(0,self.h_size-1)
-            ty = random.randint(self.bonuses['worm']['mindepth'],
-                self.bonuses['worm']['maxdepth'])
+            ty = random.randint(
+                min(self.bonuses['worm']['mindepth'], self.v_size-1),
+                min(self.bonuses['worm']['maxdepth'], self.v_size-1)
+                )
+
             tile = self.sprites[tx, ty]
 
             if self.level[tx, ty] or tile.bonus != 'None':
