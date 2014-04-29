@@ -160,7 +160,6 @@ class Game(object):
                 e_time = 0
             if w_time >= 3:
                 self.current_level.add_worm()
-                print self.rem_time, self.current_level.worms_count
                 w_time = 0
             # process events
             self.event_listener.process_events()
